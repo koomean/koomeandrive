@@ -1,753 +1,109 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Koo Mean Space — Portal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koo Mean Drive</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
 <style>
-  /* =====================================================================
-     KOO MEAN SPACE — PORTAL
-     ก่อนใช้งานจริง แก้ค่าใน CONFIG (ในแท็ก <script> ด้านล่างสุดของไฟล์นี้):
-       - APPS_SCRIPT_URL : URL ของ Web App ที่ deploy จาก Code.gs
-       - GOOGLE_CLIENT_ID : ต้องตรงกับ CONFIG.GOOGLE_CLIENT_ID ใน Code.gs เป๊ะๆ
-     ===================================================================== */
-
-  :root{
-    --ink:        #0D1220;
-    --ink-2:      #131A2B;
-    --panel:      #161E33;
-    --panel-2:    #1C263F;
-    --line:       #2A3554;
-    --line-soft:  rgba(147,161,199,0.14);
-    --paper:      #F4F1E6;
-    --paper-dim:  #C9D0E3;
-    --slate:      #8791AD;
-    --amber:      #E8A33D;
-    --amber-dim:  rgba(232,163,61,0.16);
-    --teal:       #56D1BE;
-    --danger:     #E8686B;
-    --radius:     14px;
-    --radius-sm:  9px;
-    --font-head:  'Space Grotesk', 'Noto Sans Thai', sans-serif;
-    --font-body:  'Inter', 'Noto Sans Thai', sans-serif;
-    --font-mono:  'JetBrains Mono', monospace;
-  }
-
-  *{ box-sizing: border-box; }
-  html,body{ margin:0; padding:0; }
-  body{
-    background:
-      radial-gradient(circle at 1px 1px, var(--line-soft) 1px, transparent 1px) 0 0/28px 28px,
-      linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
-    background-attachment: fixed;
-    color: var(--paper);
-    font-family: var(--font-body);
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
     min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+    font-family: 'Inter', sans-serif;
   }
-  a{ color: inherit; }
-  button{ font-family: inherit; }
-  ::selection{ background: var(--amber-dim); color: var(--paper); }
-
-  .app-shell{ max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
-
-  /* ---------- top bar ---------- */
-  .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    gap: 16px; margin-bottom: 34px;
+  .lines {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
   }
-  .brand{ display:flex; align-items:center; gap: 12px; min-width:0; }
-  .brand-mark{
-    width: 40px; height: 40px; border-radius: 10px;
-    background: linear-gradient(155deg, var(--amber) 0%, #C97B24 100%);
-    display:flex; align-items:center; justify-content:center;
-    font-family: var(--font-head); font-weight:700; color:#1A1204; font-size: 17px;
-    flex-shrink:0;
-    box-shadow: 0 6px 18px -6px rgba(232,163,61,0.55);
+  .line {
+    font-size: clamp(3rem, 14vw, 9rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+    border-right: 0.06em solid transparent;
   }
-  .brand-text{ min-width:0; }
-  .brand-title{
-    font-family: var(--font-head); font-weight:700; font-size: 17px;
-    letter-spacing: 0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
-  .brand-handle{ font-size: 12.5px; color: var(--slate); font-family: var(--font-mono); }
-
-  .userbox{ display:flex; align-items:center; gap: 10px; }
-  .userbox img{ width: 34px; height:34px; border-radius:50%; border:1.5px solid var(--line); object-fit:cover; }
-  .userbox .who{ text-align:right; line-height:1.25; }
-  .userbox .who .name{ font-size: 13.5px; font-weight:600; }
-  .userbox .who .role{ font-size: 11px; color: var(--slate); font-family: var(--font-mono); text-transform:lowercase; }
-  .icon-btn{
-    background: var(--panel); border:1px solid var(--line); color: var(--paper-dim);
-    width: 36px; height:36px; border-radius: 10px; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; transition: border-color .15s, color .15s, background .15s;
-  }
-  .icon-btn:hover{ border-color: var(--amber); color: var(--amber); }
-
-  /* ---------- hero / masthead ---------- */
-  .hero{
-    display:grid; grid-template-columns: auto 1fr; gap: 20px; align-items:center;
-    padding: 22px 24px; margin-bottom: 30px;
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
-    border:1px solid var(--line); border-radius: var(--radius);
-    position: relative; overflow:hidden;
-  }
-  .hero::before{
-    content:''; position:absolute; inset:0;
-    background: repeating-linear-gradient(90deg, transparent, transparent 39px, var(--line-soft) 40px);
-    opacity:.5; pointer-events:none;
-  }
-  .hero-avatar{
-    width: 62px; height:62px; border-radius: 14px; object-fit:cover;
-    border: 1.5px solid var(--line); background: var(--panel-2); position:relative; z-index:1;
-  }
-  .hero-avatar.fallback{ display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:22px; font-weight:700; color:var(--amber); }
-  .hero-body{ position:relative; z-index:1; min-width:0; }
-  .hero-title{ font-family: var(--font-head); font-size: 22px; font-weight:700; margin:0 0 4px; }
-  .hero-sub{ font-size: 13.5px; color: var(--paper-dim); margin:0; max-width: 640px; }
-
-  /* ---------- toolbar (search) ---------- */
-  .toolbar{
-    display:flex; align-items:center; gap: 12px; margin-bottom: 20px; flex-wrap:wrap;
-  }
-  .search-wrap{
-    flex:1; min-width: 220px; position:relative;
-  }
-  .search-wrap svg{ position:absolute; left:14px; top:50%; transform:translateY(-50%); opacity:.5; }
-  .search-wrap input{
-    width:100%; background: var(--panel); border:1px solid var(--line); color: var(--paper);
-    border-radius: var(--radius-sm); padding: 11px 14px 11px 38px; font-size: 13.5px;
-    outline:none; transition: border-color .15s;
-  }
-  .search-wrap input::placeholder{ color: var(--slate); }
-  .search-wrap input:focus{ border-color: var(--amber); }
-  .section-count{ font-family: var(--font-mono); font-size: 12px; color: var(--slate); white-space:nowrap; }
-
-  .add-app-btn{
-    display:flex; align-items:center; gap:7px;
-    background: var(--amber); color:#1A1204; border:none; border-radius: var(--radius-sm);
-    padding: 10px 16px; font-weight:600; font-size: 13.5px; cursor:pointer;
-    transition: filter .15s, transform .1s;
-  }
-  .add-app-btn:hover{ filter: brightness(1.08); }
-  .add-app-btn:active{ transform: scale(.98); }
-
-  /* ---------- app grid ---------- */
-  .grid{
-    display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px;
-  }
-  .tile{
-    position:relative; display:flex; flex-direction:column; gap: 10px;
-    background: var(--panel); border:1px solid var(--line); border-radius: var(--radius);
-    padding: 18px 16px 16px; text-decoration:none; color: var(--paper);
-    transition: transform .15s ease, border-color .15s ease, background .15s ease;
-    overflow:hidden;
-  }
-  .tile::before{
-    content:''; position:absolute; top:0; left:0; right:0; height:3px;
-    background: var(--tile-accent, var(--amber));
-    opacity: 0; transition: opacity .15s;
-  }
-  .tile:hover{ transform: translateY(-3px); border-color: var(--tile-accent, var(--amber)); background: var(--panel-2); }
-  .tile:hover::before{ opacity:1; }
-  .tile-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-  .tile-icon{
-    width: 42px; height:42px; border-radius: 11px; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center; font-size: 21px;
-    background: var(--tile-accent-dim, var(--amber-dim));
-    border: 1px solid var(--line);
-  }
-  .tile-star{ width:7px; height:7px; border-radius:50%; background: var(--amber); margin-top:6px; box-shadow: 0 0 0 3px var(--amber-dim); flex-shrink:0; }
-  .tile-name{ font-family: var(--font-head); font-weight:600; font-size: 15.5px; margin:0; }
-  .tile-desc{ font-size: 12.5px; color: var(--paper-dim); line-height:1.5; margin:0; flex:1; }
-  .tile-url{ font-family: var(--font-mono); font-size: 10.5px; color: var(--slate); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-  .tile-admin-actions{
-    position:absolute; top:12px; right:12px; display:flex; gap:6px; opacity:0; transition:opacity .15s;
-  }
-  .tile:hover .tile-admin-actions{ opacity:1; }
-  .tile-admin-actions button{
-    width:26px; height:26px; border-radius:7px; border:1px solid var(--line); background: var(--ink-2);
-    color: var(--paper-dim); display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .tile-admin-actions button:hover{ border-color: var(--amber); color: var(--amber); }
-  .tile-admin-actions button.danger:hover{ border-color: var(--danger); color: var(--danger); }
-
-  /* ---------- empty / loading ---------- */
-  .empty-state{
-    text-align:center; padding: 70px 20px; color: var(--slate);
-    border: 1px dashed var(--line); border-radius: var(--radius);
-  }
-  .empty-state .glyph{ font-size: 30px; margin-bottom: 10px; }
-  .empty-state p{ margin: 4px 0; font-size: 13.5px; }
-
-  .loading-screen, .signin-screen{
-    min-height: 84vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 20px;
-  }
-  .spinner{
-    width: 30px; height:30px; border-radius:50%;
-    border: 2.5px solid var(--line); border-top-color: var(--amber);
-    animation: spin 0.8s linear infinite; margin-bottom: 16px;
-  }
-  @keyframes spin{ to{ transform: rotate(360deg); } }
-  .loading-screen p{ color: var(--slate); font-size: 13px; font-family: var(--font-mono); }
-
-  .signin-card{
-    max-width: 380px; background: linear-gradient(180deg, var(--panel), var(--panel-2));
-    border: 1px solid var(--line); border-radius: 18px; padding: 40px 32px; position:relative; overflow:hidden;
-  }
-  .signin-card::before{
-    content:''; position:absolute; inset:0;
-    background: repeating-linear-gradient(90deg, transparent, transparent 31px, var(--line-soft) 32px),
-                repeating-linear-gradient(0deg, transparent, transparent 31px, var(--line-soft) 32px);
-    opacity:.35; pointer-events:none;
-  }
-  .signin-mark{
-    width: 54px; height:54px; border-radius:14px; margin: 0 auto 18px;
-    background: linear-gradient(155deg, var(--amber), #C97B24);
-    display:flex; align-items:center; justify-content:center;
-    font-family: var(--font-head); font-weight:700; font-size:22px; color:#1A1204;
-    position:relative; z-index:1;
-  }
-  .signin-card h1{ font-family: var(--font-head); font-size: 21px; margin: 0 0 8px; position:relative; z-index:1; }
-  .signin-card p{ color: var(--paper-dim); font-size: 13.5px; line-height:1.6; margin: 0 0 26px; position:relative; z-index:1; }
-  #gsi-button-wrap{ display:flex; justify-content:center; position:relative; z-index:1; }
-  .signin-note{ margin-top:18px; font-size:11.5px; color: var(--slate); position:relative; z-index:1; }
-
-  .banner{
-    display:flex; gap:10px; align-items:flex-start; padding: 12px 14px; border-radius: var(--radius-sm);
-    background: rgba(232,104,107,0.1); border:1px solid rgba(232,104,107,0.35); color: #F3B3B4;
-    font-size: 12.5px; margin-bottom: 20px; line-height:1.5;
-  }
-
-  /* ---------- modal ---------- */
-  .modal-overlay{
-    position:fixed; inset:0; background: rgba(6,9,16,0.72); backdrop-filter: blur(2px);
-    display:flex; align-items:center; justify-content:center; z-index: 100; padding: 20px;
-  }
-  .modal{
-    width: 100%; max-width: 440px; background: var(--panel-2); border:1px solid var(--line);
-    border-radius: 16px; padding: 26px; max-height: 88vh; overflow-y:auto;
-  }
-  .modal h2{ font-family: var(--font-head); font-size: 17px; margin: 0 0 18px; }
-  .field{ margin-bottom: 14px; }
-  .field label{ display:block; font-size: 12px; color: var(--paper-dim); margin-bottom: 6px; }
-  .field input, .field textarea{
-    width:100%; background: var(--ink-2); border:1px solid var(--line); color: var(--paper);
-    border-radius: 8px; padding: 9px 11px; font-size: 13.5px; outline:none; font-family: inherit;
-  }
-  .field input:focus, .field textarea:focus{ border-color: var(--amber); }
-  .field-row{ display:flex; gap:10px; }
-  .field-row .field{ flex:1; }
-  .field-hint{ font-size:10.5px; color: var(--slate); margin-top:5px; }
-  .checkbox-row{ display:flex; align-items:center; gap:8px; margin-bottom: 16px; }
-  .checkbox-row input{ width:auto; }
-  .checkbox-row label{ font-size:12.5px; color: var(--paper-dim); }
-  .modal-actions{ display:flex; gap:10px; margin-top: 18px; }
-  .btn{
-    flex:1; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; font-weight:600; cursor:pointer; border:1px solid var(--line);
-  }
-  .btn-primary{ background: var(--amber); color:#1A1204; border-color: var(--amber); }
-  .btn-primary:disabled{ opacity:.6; cursor:default; }
-  .btn-ghost{ background: transparent; color: var(--paper-dim); }
-  .btn-ghost:hover{ border-color: var(--slate); }
-  .modal-error{ font-size: 12px; color: var(--danger); margin-top: 10px; min-height:14px; }
-
-  .toast{
-    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
-    background: var(--panel-2); border:1px solid var(--line); color: var(--paper);
-    padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 200;
-    box-shadow: 0 10px 30px -8px rgba(0,0,0,0.5);
-  }
-
-  [hidden]{ display:none !important; }
-
-  @media (max-width: 560px){
-    .app-shell{ padding: 18px 14px 60px; }
-    .hero{ grid-template-columns: 1fr; text-align:center; padding: 20px; }
-    .hero-avatar{ margin: 0 auto; }
-    .userbox .who{ display:none; }
-    .topbar{ margin-bottom: 22px; }
+  .line.last.typing { border-right-color: #fff; }
+  @keyframes blink { 50% { border-color: transparent; } }
+  .line.last.done {
+    border-right-color: #fff;
+    animation: blink 0.7s step-end infinite;
   }
 </style>
 </head>
 <body>
-
-<div class="app-shell">
-
-  <!-- ================= LOADING ================= -->
-  <div id="loadingScreen" class="loading-screen">
-    <div class="spinner"></div>
-    <p id="loadingText">กำลังเชื่อมต่อ Koo Mean Space...</p>
+  <div class="lines">
+    <div class="line">Koo Mean</div>
+    <div class="line">Drive</div>
+    <div class="line last">Coming Soon</div>
   </div>
-
-  <!-- ================= SIGN-IN ================= -->
-  <div id="signinScreen" class="signin-screen" hidden>
-    <div class="signin-card">
-      <div class="signin-mark">KM</div>
-      <h1 id="signinTitle">Koo Mean Space</h1>
-      <p>ศูนย์รวมแอปพลิเคชันทั้งหมดในที่เดียว เข้าสู่ระบบด้วยบัญชี Google เพื่อเริ่มใช้งาน</p>
-      <div id="gsi-button-wrap"></div>
-      <div id="signinBanner"></div>
-      <p class="signin-note">ใช้บัญชีเดียวกับที่คุณล็อกอินในเว็บอื่นๆ ของ Koo Mean ได้เลย</p>
-    </div>
-  </div>
-
-  <!-- ================= PORTAL ================= -->
-  <div id="portalScreen" hidden>
-    <div class="topbar">
-      <div class="brand">
-        <div class="brand-mark">KM</div>
-        <div class="brand-text">
-          <div class="brand-title" id="brandTitle">Koo Mean Space</div>
-          <div class="brand-handle" id="brandHandle">@koomean</div>
-        </div>
-      </div>
-      <div class="userbox">
-        <div class="who">
-          <div class="name" id="userName">—</div>
-          <div class="role" id="userRole">public</div>
-        </div>
-        <img id="userPic" src="" alt="" hidden>
-        <button class="icon-btn" id="signOutBtn" title="ออกจากระบบ">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <div id="errorBanner" class="banner" hidden></div>
-
-    <div class="hero">
-      <img id="heroAvatar" class="hero-avatar" src="" alt="" hidden>
-      <div id="heroAvatarFallback" class="hero-avatar fallback">KM</div>
-      <div class="hero-body">
-        <h1 class="hero-title" id="heroTitle">Koo Mean Space</h1>
-        <p class="hero-sub" id="heroSub">ทางลัดไปยังทุกแอปพลิเคชันของฉัน — เลือกแอปที่ต้องการด้านล่างเพื่อเริ่มใช้งาน</p>
-      </div>
-    </div>
-
-    <div class="toolbar">
-      <div class="search-wrap">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="searchInput" placeholder="ค้นหาแอป...">
-      </div>
-      <span class="section-count" id="appCount">0 แอป</span>
-      <button class="add-app-btn" id="addAppBtn" hidden>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        เพิ่มแอป
-      </button>
-    </div>
-
-    <div id="grid" class="grid"></div>
-    <div id="emptyState" class="empty-state" hidden>
-      <div class="glyph">🗂️</div>
-      <p id="emptyTitle">ยังไม่มีแอปพลิเคชันให้แสดงตอนนี้</p>
-      <p id="emptySub" style="font-size:11.5px;">แอดมินสามารถเพิ่มแอปได้จากปุ่ม "เพิ่มแอป" ด้านบน หรือกรอกข้อมูลในชีต Application โดยตรง</p>
-    </div>
-  </div>
-
-</div>
-
-<!-- ================= APP FORM MODAL ================= -->
-<div id="appModalOverlay" class="modal-overlay" hidden>
-  <div class="modal">
-    <h2 id="appModalTitle">เพิ่มแอปใหม่</h2>
-    <form id="appForm">
-      <div class="field">
-        <label>ชื่อแอป</label>
-        <input type="text" id="fName" maxlength="100" required placeholder="เช่น LidarSeePro">
-      </div>
-      <div class="field">
-        <label>ลิงก์ (URL)</label>
-        <input type="url" id="fUrl" maxlength="500" required placeholder="https://...">
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>ไอคอน (อีโมจิ)</label>
-          <input type="text" id="fIcon" maxlength="10" placeholder="🛰️">
-        </div>
-        <div class="field">
-          <label>สีประจำแอป (ไม่บังคับ)</label>
-          <input type="text" id="fColor" maxlength="20" placeholder="#56D1BE">
-        </div>
-      </div>
-      <div class="field">
-        <label>คำอธิบายสั้นๆ</label>
-        <textarea id="fDesc" rows="2" maxlength="300" placeholder="อธิบายว่าแอปนี้ใช้ทำอะไร"></textarea>
-      </div>
-      <div class="field">
-        <label>กลุ่มผู้ใช้ที่เข้าถึงได้ (คั่นด้วยจุลภาค)</label>
-        <input type="text" id="fGroup" maxlength="200" placeholder="public">
-        <div class="field-hint">เว้นว่างหรือใส่ "public" = ทุกคนเห็น, ใส่ role อื่นเพื่อจำกัดสิทธิ์ (admin เห็นทุกแอปเสมอ)</div>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="fStarred">
-        <label for="fStarred">ปักหมุดแอปนี้ไว้เด่น</label>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" id="appModalCancel">ยกเลิก</button>
-        <button type="submit" class="btn btn-primary" id="appModalSave">บันทึก</button>
-      </div>
-      <div class="modal-error" id="appModalError"></div>
-    </form>
-  </div>
-</div>
 
 <script>
-/* =====================================================================
-   CONFIG — แก้สองค่านี้ให้ตรงกับของจริงก่อนใช้งาน
-   ===================================================================== */
-const CONFIG = {
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwBYhFTW68AfN4cYUJYS1DG7vw-Ocykx5kslSUQIeJJlfu0oeBIdi9xAhVmorVWQ4q7rg/exec',
-  GOOGLE_CLIENT_ID: '906677442222-kmjgsmta70n24aoaq7osm9c1l7g1fb89.apps.googleusercontent.com'
-};
+  const lines = Array.from(document.querySelectorAll('.line'));
 
-/* =====================================================================
-   STATE
-   ===================================================================== */
-let session = null;      // { idToken, email, name, picture, exp }
-let portalData = null;   // last bootstrap() response
-let editingRowIdx = null;
-
-const $ = (id) => document.getElementById(id);
-const screens = { loading: $('loadingScreen'), signin: $('signinScreen'), portal: $('portalScreen') };
-
-function showScreen(name){
-  Object.entries(screens).forEach(([k, el]) => el.hidden = (k !== name));
-}
-
-/* =====================================================================
-   BACKEND CALL — POST urlencoded (ไม่ทำให้เกิด CORS preflight)
-   ===================================================================== */
-async function callBackend(action, params){
-  params = params || {};
-  const body = new URLSearchParams({ action, idToken: (session && session.idToken) || '', ...params });
-  const res = await fetch(CONFIG.APPS_SCRIPT_URL, { method: 'POST', body });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-}
-
-/* =====================================================================
-   GOOGLE SIGN-IN
-   ===================================================================== */
-function decodeJwt(token){
-  try {
-    const payload = token.split('.')[1];
-    const json = decodeURIComponent(atob(payload.replace(/-/g,'+').replace(/_/g,'/'))
-      .split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    return JSON.parse(json);
-  } catch(e){ return null; }
-}
-
-function saveSession(idToken){
-  const claims = decodeJwt(idToken);
-  if (!claims) return null;
-  const s = {
-    idToken,
-    email: claims.email,
-    name: claims.name || '',
-    picture: claims.picture || '',
-    exp: claims.exp
-  };
-  try { localStorage.setItem('kms_session', JSON.stringify(s)); } catch(_){}
-  return s;
-}
-
-function loadSession(){
-  try {
-    const raw = localStorage.getItem('kms_session');
-    if (!raw) return null;
-    const s = JSON.parse(raw);
-    if (!s || !s.exp || s.exp * 1000 <= Date.now()) return null;
-    return s;
-  } catch(_){ return null; }
-}
-
-function clearSession(){
-  try { localStorage.removeItem('kms_session'); } catch(_){}
-  session = null;
-  try { google.accounts.id.disableAutoSelect(); } catch(_){}
-}
-
-function handleCredentialResponse(response){
-  session = saveSession(response.credential);
-  if (!session) {
-    showSigninError('ล็อกอินไม่สำเร็จ กรุณาลองใหม่');
-    return;
-  }
-  bootstrapPortal();
-}
-
-function initGoogleSignIn(){
-  google.accounts.id.initialize({
-    client_id: CONFIG.GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse,
-    auto_select: true
-  });
-  google.accounts.id.renderButton($('gsi-button-wrap'), {
-    theme: 'filled_black', size: 'large', shape: 'pill', text: 'signin_with', width: 260
-  });
-}
-
-function showSigninError(msg){
-  $('signinBanner').innerHTML = '<div class="banner" style="text-align:left;">' + msg + '</div>';
-}
-
-/* =====================================================================
-   BOOTSTRAP FLOW
-   ===================================================================== */
-async function bootstrapPortal(){
-  showScreen('loading');
-  $('loadingText').textContent = 'กำลังโหลดข้อมูล...';
-  try {
-    let data = await callBackend('bootstrap');
-
-    if (data.authError === 'INVALID_TOKEN') {
-      clearSession();
-      showScreen('signin');
-      showSigninError('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
-      return;
-    }
-
-    if (data.requireRegistration) {
-      $('loadingText').textContent = 'กำลังลงทะเบียนบัญชีใหม่...';
-      await callBackend('register');
-      data = await callBackend('bootstrap');
-    }
-
-    portalData = data;
-    renderPortal(data);
-    showScreen('portal');
-  } catch (err) {
-    showScreen('signin');
-    showSigninError('เชื่อมต่อ backend ไม่สำเร็จ — ตรวจสอบว่าตั้งค่า APPS_SCRIPT_URL ถูกต้องและ deploy เป็น "Anyone" แล้ว<br><span style="font-family:monospace;font-size:10.5px;opacity:.7;">' + (err.message||'') + '</span>');
-  }
-}
-
-/* =====================================================================
-   RENDER
-   ===================================================================== */
-function renderPortal(data){
-  const sp = data.spaceProfile || {};
-  const pf = data.profile || {};
-  const user = data.user || { role: 'public' };
-  const isAdmin = String(user.role||'').toLowerCase().split(/[,;|]+/).indexOf('admin') > -1;
-
-  document.title = (sp.webTitle || 'Koo Mean Space') + ' — Portal';
-  $('brandTitle').textContent = sp.webTitle || 'Koo Mean Space';
-  $('brandHandle').textContent = sp.handle || '@koomean';
-  $('signinTitle').textContent = sp.webTitle || 'Koo Mean Space';
-  $('heroTitle').textContent = (pf.name || sp.name || 'Koo Mean Space');
-  $('heroSub').textContent = pf.bio || sp.bio || 'ทางลัดไปยังทุกแอปพลิเคชันของฉัน — เลือกแอปที่ต้องการด้านล่างเพื่อเริ่มใช้งาน';
-
-  const avatarUrl = pf.imageUrl || sp.imageUrl || user.pic || '';
-  if (avatarUrl) {
-    $('heroAvatar').src = avatarUrl; $('heroAvatar').hidden = false; $('heroAvatarFallback').hidden = true;
-  } else {
-    $('heroAvatar').hidden = true; $('heroAvatarFallback').hidden = false;
-  }
-
-  $('userName').textContent = user.name || (user.email ? user.email.split('@')[0] : 'ผู้ใช้');
-  $('userRole').textContent = user.role || 'public';
-  if (user.pic) { $('userPic').src = user.pic; $('userPic').hidden = false; }
-
-  $('addAppBtn').hidden = !isAdmin;
-
-  // merge Application sheet items with legacy Apps sheet items (backward-compat fallback)
-  const apps = Array.isArray(data.applications) ? data.applications.slice() : [];
-  const seenUrls = new Set(apps.map(a => a.url));
-  (data.apps || []).forEach(a => {
-    if (a && a.url && !seenUrls.has(a.url)) {
-      apps.push({ name: a.name, url: a.url, icon: '', description: '', starred: false, color: '' });
-      seenUrls.add(a.url);
-    }
-  });
-
-  window.__allApps = apps;
-  window.__isAdmin = isAdmin;
-  applyFilterAndRender();
-}
-
-function applyFilterAndRender(){
-  const q = ($('searchInput').value || '').trim().toLowerCase();
-  const all = window.__allApps || [];
-  const filtered = q
-    ? all.filter(a => (a.name||'').toLowerCase().includes(q) || (a.description||'').toLowerCase().includes(q))
-    : all;
-
-  $('appCount').textContent = filtered.length + ' แอป';
-  const grid = $('grid');
-  grid.innerHTML = '';
-
-  if (!filtered.length) {
-    $('emptyState').hidden = false;
-    $('emptyTitle').textContent = q ? ('ไม่พบแอปที่ตรงกับ "' + q + '"') : 'ยังไม่มีแอปพลิเคชันให้แสดงตอนนี้';
-    return;
-  }
-  $('emptyState').hidden = true;
-
-  filtered.forEach(app => grid.appendChild(renderTile(app)));
-}
-
-function renderTile(app){
-  const a = document.createElement('a');
-  a.className = 'tile';
-  a.href = app.url || '#';
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  if (app.color) {
-    a.style.setProperty('--tile-accent', app.color);
-    a.style.setProperty('--tile-accent-dim', app.color + '29');
-  }
-
-  const initials = (app.name || '?').trim().slice(0,1).toUpperCase();
-
-  a.innerHTML = `
-    <div class="tile-top">
-      <div class="tile-icon">${app.icon ? escapeHtml(app.icon) : initials}</div>
-      ${app.starred ? '<div class="tile-star" title="ปักหมุด"></div>' : ''}
-    </div>
-    <p class="tile-name">${escapeHtml(app.name || 'Untitled')}</p>
-    ${app.description ? `<p class="tile-desc">${escapeHtml(app.description)}</p>` : '<div style="flex:1"></div>'}
-    <div class="tile-url">${escapeHtml((app.url||'').replace(/^https?:\/\//,''))}</div>
-  `;
-
-  if (window.__isAdmin && app.rowIdx) {
-    const actions = document.createElement('div');
-    actions.className = 'tile-admin-actions';
-    actions.innerHTML = `
-      <button type="button" data-act="edit" title="แก้ไข">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-      </button>
-      <button type="button" data-act="delete" class="danger" title="ลบ">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-      </button>
-    `;
-    actions.addEventListener('click', (ev) => {
-      ev.preventDefault(); ev.stopPropagation();
-      const act = ev.target.closest('button')?.dataset.act;
-      if (act === 'edit') openAppModal(app);
-      if (act === 'delete') deleteApp(app);
+  // Measure natural width of each line
+  function widths() {
+    return lines.map(el => {
+      const prev = el.style.width;
+      el.style.width = 'max-content';
+      const w = el.getBoundingClientRect().width;
+      el.style.width = prev;
+      return w;
     });
-    a.appendChild(actions);
   }
 
-  return a;
-}
+  function typeLine(el, targetW, perCharMs) {
+    return new Promise(resolve => {
+      const isLast = el.classList.contains('last');
+      el.style.borderRightColor = '#fff';
+      if (isLast) el.classList.add('typing');
 
-function escapeHtml(s){
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+      const steps = Math.max(el.textContent.length, 1);
+      const duration = steps * perCharMs;
+      const start = performance.now();
 
-/* =====================================================================
-   ADMIN — ADD / EDIT / DELETE APP
-   ===================================================================== */
-function openAppModal(app){
-  editingRowIdx = app ? app.rowIdx : null;
-  $('appModalTitle').textContent = app ? 'แก้ไขแอป' : 'เพิ่มแอปใหม่';
-  $('fName').value = app ? (app.name||'') : '';
-  $('fUrl').value = app ? (app.url||'') : '';
-  $('fIcon').value = app ? (app.icon||'') : '';
-  $('fColor').value = app ? (app.color||'') : '';
-  $('fDesc').value = app ? (app.description||'') : '';
-  $('fGroup').value = app ? (app.group||'') : '';
-  $('fStarred').checked = !!(app && app.starred);
-  $('appModalError').textContent = '';
-  $('appModalOverlay').hidden = false;
-  $('fName').focus();
-}
-
-function closeAppModal(){
-  $('appModalOverlay').hidden = true;
-  editingRowIdx = null;
-}
-
-async function submitAppForm(ev){
-  ev.preventDefault();
-  const saveBtn = $('appModalSave');
-  saveBtn.disabled = true;
-  $('appModalError').textContent = '';
-
-  const payload = {
-    name: $('fName').value.trim(),
-    url: $('fUrl').value.trim(),
-    icon: $('fIcon').value.trim(),
-    color: $('fColor').value.trim(),
-    description: $('fDesc').value.trim(),
-    group: $('fGroup').value.trim(),
-    starred: $('fStarred').checked ? '1' : '0'
-  };
-
-  try {
-    let res;
-    if (editingRowIdx) {
-      res = await callBackend('updateApplication', { rowIdx: editingRowIdx, ...payload });
-    } else {
-      res = await callBackend('addApplication', payload);
-    }
-    if (!res.success) throw new Error(res.message || 'บันทึกไม่สำเร็จ');
-    closeAppModal();
-    showToast(editingRowIdx ? 'แก้ไขแอปแล้ว' : 'เพิ่มแอปแล้ว');
-    await bootstrapPortal();
-  } catch (err) {
-    $('appModalError').textContent = err.message || 'เกิดข้อผิดพลาด';
-  } finally {
-    saveBtn.disabled = false;
+      function frame(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const stepped = Math.floor(t * steps) / steps;
+        el.style.width = (targetW * stepped) + 'px';
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          el.style.width = targetW + 'px';
+          if (isLast) {
+            el.classList.remove('typing');
+            el.classList.add('done');
+          } else {
+            el.style.borderRightColor = 'transparent';
+          }
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
   }
-}
 
-async function deleteApp(app){
-  if (!confirm('ลบแอป "' + app.name + '" ใช่หรือไม่?')) return;
-  try {
-    const res = await callBackend('deleteApplication', { rowIdx: app.rowIdx });
-    if (!res.success) throw new Error(res.message || 'ลบไม่สำเร็จ');
-    showToast('ลบแอปแล้ว');
-    await bootstrapPortal();
-  } catch (err) {
-    alert(err.message || 'เกิดข้อผิดพลาด');
+  function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function run() {
+    await document.fonts.ready;
+    const w = widths();
+    await wait(300);
+    await typeLine(lines[0], w[0], 150);
+    await wait(250);
+    await typeLine(lines[1], w[1], 200);
+    await wait(250);
+    await typeLine(lines[2], w[2], 180);
   }
-}
 
-function showToast(msg){
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
-}
-
-/* =====================================================================
-   EVENTS
-   ===================================================================== */
-$('searchInput').addEventListener('input', applyFilterAndRender);
-$('addAppBtn').addEventListener('click', () => openAppModal(null));
-$('appModalCancel').addEventListener('click', closeAppModal);
-$('appModalOverlay').addEventListener('click', (e) => { if (e.target.id === 'appModalOverlay') closeAppModal(); });
-$('appForm').addEventListener('submit', submitAppForm);
-$('signOutBtn').addEventListener('click', () => {
-  clearSession();
-  showScreen('signin');
-  $('signinBanner').innerHTML = '';
-});
-
-/* =====================================================================
-   BOOT
-   ===================================================================== */
-window.addEventListener('load', () => {
-  initGoogleSignIn();
-  const existing = loadSession();
-  if (existing) {
-    session = existing;
-    bootstrapPortal();
-  } else {
-    showScreen('signin');
-  }
-});
+  run();
 </script>
 </body>
 </html>
