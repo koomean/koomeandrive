@@ -2,6 +2,15 @@ import type { DriveItem, DriveProvider } from './types'
 
 const API_URL = import.meta.env.VITE_DRIVE_API_URL || 'https://koomean-proxy.meanchannel52.workers.dev'
 export type DriveUser = { email: string; name: string; roles: string[]; isAdmin: boolean }
+export type GlobalMaintenanceState = { active: boolean; note: string; reopenAt: number | null; serverTime: number }
+
+export async function getGlobalMaintenanceState(): Promise<GlobalMaintenanceState> {
+  const body = new URLSearchParams({ action: 'maintenanceStatus' })
+  const response = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, cache: 'no-store', credentials: 'omit' })
+  const data = await response.json() as { maintenance?: GlobalMaintenanceState }
+  if (!response.ok || !data.maintenance) throw new Error('Could not read service status')
+  return data.maintenance
+}
 
 export class WorkerDriveProvider implements DriveProvider {
   user: DriveUser | null = null

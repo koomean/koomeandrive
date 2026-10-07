@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Archive, ArrowLeft, ArrowUpDown, Bell, Check, ChevronDown, ChevronRight, CircleHelp, Cloud, CloudUpload, Download, File, FileArchive, FileAudio, FileImage, FileSpreadsheet, FileText, FileUp, FileVideo, Folder, FolderPlus, Grid2X2, HardDrive, LayoutList, MoreHorizontal, Plus, Search, Settings2, Star, Trash2, Upload, X } from 'lucide-react'
-import { WorkerDriveProvider, type DriveUser } from './providers/worker'
+import { getGlobalMaintenanceState, WorkerDriveProvider, type DriveUser, type GlobalMaintenanceState } from './providers/worker'
 import type { DriveItem } from './providers/types'
 
 type View = 'all' | 'starred' | 'recent' | 'trash'
@@ -38,8 +38,27 @@ export default function App() {
   const [mobileNav, setMobileNav] = useState(false)
   const [newMenu, setNewMenu] = useState(false)
   const [replaceTarget, setReplaceTarget] = useState<string | null>(null)
+  const [maintenance, setMaintenance] = useState<GlobalMaintenanceState | null>(null)
+  const [maintenanceNow, setMaintenanceNow] = useState(Date.now())
   const uploadRef = useRef<HTMLInputElement>(null)
   const googleButtonRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let alive = true
+    let wasActive = false
+    const check = async () => {
+      try {
+        const status = await getGlobalMaintenanceState()
+        if (!alive) return
+        if (status.active) { wasActive = true; setMaintenance(status) }
+        else if (wasActive) window.location.reload()
+      } catch { /* Keep the current view if the status endpoint is temporarily unavailable. */ }
+    }
+    void check()
+    const poll = window.setInterval(check, 15000)
+    const clock = window.setInterval(() => setMaintenanceNow(Date.now()), 1000)
+    return () => { alive = false; window.clearInterval(poll); window.clearInterval(clock) }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -126,6 +145,13 @@ export default function App() {
   const activateView = (next: View) => { setView(next); setPath('/'); setSelected(null); setMobileNav(false) }
   const openFolder = (item: DriveItem) => { setPath(`${item.path === '/' ? '' : item.path}/${item.name}` || '/'); setView('all'); setSelected(null) }
   const selectedItem = items.find(item => item.id === selected)
+
+  if (maintenance?.active) {
+    const seconds = Math.max(0, Math.floor(((maintenance.reopenAt || maintenanceNow) - maintenanceNow) / 1000))
+    const days = Math.floor(seconds / 86400)
+    const countdown = `${days ? `${days} วัน ` : ''}${String(Math.floor(seconds % 86400 / 3600)).padStart(2, '0')}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
+    return <main className="global-maintenance"><section className="global-maintenance-card"><span className="global-maintenance-icon">⌛</span><p className="global-maintenance-eyebrow">ปิดปรับปรุงชั่วคราว</p><h1>ระบบจะกลับมาให้บริการเร็ว ๆ นี้</h1><p className="global-maintenance-note">{maintenance.note || 'ระบบปิดให้บริการชั่วคราว กรุณากลับมาใหม่อีกครั้ง'}</p><div className="global-maintenance-count"><span>เปิดให้บริการอีกครั้งใน</span><strong>{countdown}</strong></div><p className="global-maintenance-foot">เปิดอัตโนมัติ {maintenance.reopenAt ? new Date(maintenance.reopenAt).toLocaleString('th-TH') : ''}</p></section></main>
+  }
 
   if (!drive || !user) return <div className="login-screen"><div className="login-card"><span className="login-cloud"><Cloud size={30}/></span><p className="login-eyebrow">KOO MEAN · PRIVATE DRIVE</p><h1>เข้าสู่ระบบ Drive</h1><p className="login-description">ใช้บัญชี Google ที่ลงทะเบียนไว้ เพื่อดูไฟล์ตามสิทธิ์ของบัญชี</p><div className="google-login" ref={googleButtonRef}/>{loginBusy && <p className="login-status">กำลังตรวจสอบสิทธิ์กับ D1…</p>}{loginError && <p className="login-error" role="alert">{loginError}</p>}<p className="login-footnote">ระบบตรวจสิทธิ์จากฐานข้อมูลก่อนแสดงไฟล์ทุกครั้ง</p></div></div>
 
