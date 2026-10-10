@@ -10,3 +10,6 @@ const script=html.match(/src="(\/assets\/[^\"]+\.js)"/)[1];
 const js=fs.readFileSync('dist'+script,'utf8');
 assert.ok(js.includes('maintenanceStatus')&&js.includes('maintenance-countdown'));
 console.log('PASS Drive repository, custom domain, app identity and maintenance assets');
+
+assert.doesNotMatch(fs.readFileSync('src/maintenance.tsx','utf8'), /ThemeSelect|<select/);
+assert.match(fs.readFileSync('src/theme.tsx','utf8'), /koomean_drive_theme_v1/);
