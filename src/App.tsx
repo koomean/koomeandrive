@@ -3,12 +3,20 @@ import { Archive, ArrowLeft, ArrowUpDown, Bell, Check, ChevronDown, ChevronRight
 import { getGlobalMaintenanceState, WorkerDriveProvider, type DriveUser, type GlobalMaintenanceState } from './providers/worker'
 import type { DriveItem } from './providers/types'
 import { MaintenanceScreen } from './maintenance'
+import { ThemeSelect } from './theme'
 
 type View = 'all' | 'starred' | 'recent' | 'trash'
 type GoogleIdClient = { initialize: (config: Record<string, unknown>) => void; renderButton: (target: HTMLElement, options: Record<string, unknown>) => void }
 const GOOGLE_CLIENT_ID = '906677442222-kmjgsmta70n24aoaq7osm9c1l7g1fb89.apps.googleusercontent.com'
 const formatter = new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })
 const sizeLabel = (size: number) => size < 1024 ? `${size} B` : size < 1024 ** 2 ? `${(size / 1024).toFixed(0)} KB` : `${(size / 1024 ** 2).toFixed(1)} MB`
+const DRIVE_PREFS_KEY = 'koomean_drive_prefs_v1'
+function readDisplayPreferences(): { layout: 'list' | 'grid'; sort: 'name' | 'modifiedAt' | 'size' } {
+  try {
+    const value = JSON.parse(localStorage.getItem(DRIVE_PREFS_KEY) || '{}')
+    return { layout: value?.layout === 'grid' ? 'grid' : 'list', sort: value?.sort === 'modifiedAt' || value?.sort === 'size' ? value.sort : 'name' }
+  } catch { return { layout: 'list', sort: 'name' } }
+}
 const ext = (name: string) => name.split('.').pop()?.toLowerCase() || ''
 
 function FileGlyph({ item, large = false }: { item: DriveItem; large?: boolean }) {
@@ -28,8 +36,8 @@ export default function App() {
   const [path, setPath] = useState('/')
   const [view, setView] = useState<View>('all')
   const [query, setQuery] = useState('')
-  const [layout, setLayout] = useState<'list' | 'grid'>('list')
-  const [sort, setSort] = useState<'name' | 'modifiedAt' | 'size'>('name')
+  const [layout, setLayout] = useState<'list' | 'grid'>(() => readDisplayPreferences().layout)
+  const [sort, setSort] = useState<'name' | 'modifiedAt' | 'size'>(() => readDisplayPreferences().sort)
   const [selected, setSelected] = useState<string | null>(null)
   const [menuFor, setMenuFor] = useState<string | null>(null)
   const [modal, setModal] = useState<'folder' | 'connect' | 'preview' | null>(null)
@@ -44,6 +52,10 @@ export default function App() {
   const maintenanceOffset = useRef(0)
   const uploadRef = useRef<HTMLInputElement>(null)
   const googleButtonRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    try { localStorage.setItem(DRIVE_PREFS_KEY, JSON.stringify({ layout, sort })) } catch { /* Use this visit's preferences. */ }
+  }, [layout, sort])
 
   useEffect(() => {
     let alive = true
@@ -154,14 +166,14 @@ export default function App() {
 
   if (maintenance?.active) return <MaintenanceScreen state={maintenance} now={maintenanceNow} />
 
-  if (!drive || !user) return <div className="login-screen"><div className="login-card"><span className="login-cloud"><Cloud size={30}/></span><p className="login-eyebrow">KOO MEAN · PRIVATE DRIVE</p><h1>เข้าสู่ระบบ Drive</h1><p className="login-description">ใช้บัญชี Google ที่ลงทะเบียนไว้ เพื่อดูไฟล์ตามสิทธิ์ของบัญชี</p><div className="google-login" ref={googleButtonRef}/>{loginBusy && <p className="login-status">กำลังตรวจสอบสิทธิ์กับ D1…</p>}{loginError && <p className="login-error" role="alert">{loginError}</p>}<p className="login-footnote">ระบบตรวจสิทธิ์จากฐานข้อมูลก่อนแสดงไฟล์ทุกครั้ง</p></div></div>
+  if (!drive || !user) return <div className="login-screen"><div className="login-card"><div className="login-theme"><ThemeSelect /></div><span className="login-cloud"><Cloud size={30}/></span><p className="login-eyebrow">KOO MEAN · PRIVATE DRIVE</p><h1>เข้าสู่ระบบ Drive</h1><p className="login-description">ใช้บัญชี Google ที่ลงทะเบียนไว้ เพื่อดูไฟล์ตามสิทธิ์ของบัญชี</p><div className="google-login" ref={googleButtonRef}/>{loginBusy && <p className="login-status">กำลังตรวจสอบสิทธิ์กับ D1…</p>}{loginError && <p className="login-error" role="alert">{loginError}</p>}<p className="login-footnote">ระบบตรวจสิทธิ์จากฐานข้อมูลก่อนแสดงไฟล์ทุกครั้ง</p></div></div>
 
   return <div className="drive-app">
     <header className="topbar">
       <button className="mobile-menu icon-button" onClick={() => setMobileNav(!mobileNav)} aria-label="เปิดเมนู"><Grid2X2 size={20}/></button>
       <a className="brand" href="#" onClick={e => { e.preventDefault(); activateView('all') }}><span className="brand-mark"><Cloud size={25} strokeWidth={2.1}/></span><span>Koo <b>Drive</b></span></a>
       <div className="search-wrap"><Search size={19}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="ค้นหาใน Drive" aria-label="ค้นหาใน Drive"/>{query && <button className="search-clear" onClick={() => setQuery('')} aria-label="ล้างการค้นหา"><X size={16}/></button>}<button className="search-options" title="ตัวเลือกการค้นหา"><Settings2 size={19}/></button></div>
-      <div className="top-actions"><button className="icon-button" title="สิทธิ์การเข้าถึง" onClick={() => setModal('connect')}><CircleHelp size={20}/></button><button className="profile" title={`${user.name} · ออกจากระบบ`} onClick={() => { setDrive(null); setUser(null); setItems([]); setSelected(null); setLoginError('') }}>{user.name.slice(0, 1).toUpperCase()}</button></div>
+      <div className="top-actions"><ThemeSelect /><button className="icon-button" title="สิทธิ์การเข้าถึง" onClick={() => setModal('connect')}><CircleHelp size={20}/></button><button className="profile" title={`${user.name} · ออกจากระบบ`} onClick={() => { setDrive(null); setUser(null); setItems([]); setSelected(null); setLoginError('') }}>{user.name.slice(0, 1).toUpperCase()}</button></div>
     </header>
 
     <aside className={`sidebar ${mobileNav ? 'sidebar-open' : ''}`}>
